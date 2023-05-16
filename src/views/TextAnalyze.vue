@@ -14,6 +14,7 @@
                             <li><button class="dropdown-item" @click="change_condition('сил.структуры')">Сил.Структуры</button></li>
                             <li><button class="dropdown-item" @click="change_condition('разные т.з.')">Разные т.з.</button></li>
                         </ul>
+                        <input class="form-control" type="text" v-model="input">
                     </div>
                     <div class="cond">Что передается в ChatGPT: <i>Предоставь мне подробный анализ данной новости {{ this.condition}}</i></div>
                     <div class="spinner-border text-success" role="status" id="load-circle">
@@ -60,14 +61,15 @@
 <script>
     import { Configuration, OpenAIApi } from "openai"
     const configuration = new Configuration({
-        apiKey: "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",
+        apiKey: "",
     });
     let prepared_data = ""
     const openai = new OpenAIApi(configuration);
     export default{
         data() {
             return {
-                condition: ""
+                condition: "",
+                input: ""
             }
         },
         methods: {
@@ -76,13 +78,18 @@
                 textArea.value = ""
             },
             change_condition(statement) {
-                if (statement == "бизнес") {this.condition = "с точки зрения бизнеса"} 
-                if (statement == "государство") {this.condition = "с точки зрения государства"} 
-                if (statement == "сил.структуры") {this.condition = "с точки зрения силовых структур"} 
-                if (statement == "разные т.з.") {this.condition = "с разных точек зрения"} 
+                if (statement == "бизнес") {this.condition = "C точки зрения бизнеса"} 
+                if (statement == "государство") {this.condition = "C точки зрения государства"} 
+                if (statement == "сил.структуры") {this.condition = "C точки зрения силовых структур"} 
+                if (statement == "разные т.з.") {this.condition = "C разных точек зрения"} 
 
             },
             async push_news() {
+                if (this.input.length > 0) {
+                    this.condition = this.input
+                    console.log(this.input)
+                }
+
                 if (this.condition == "") {
                     alert("Внимание! Вы не выбрали условие!")
                     return 0
@@ -95,6 +102,10 @@
                     return 0
                 }
                 
+                if (this.input.length > 0) {
+                    this.condition = this.input
+                }
+
                 const load_elem = document.getElementById("load-circle")
                 load_elem.style.display = "inline-block"
                 const textArea2 = document.getElementById("Textarea2")
@@ -102,10 +113,9 @@
                 const completion = await openai.createChatCompletion({
                     model: "gpt-3.5-turbo",
                     messages: [
-                        {'role': 'system', 'content': 'Вы помощник для системы мониторинга. Вы должны дать свой собственный анализ представленной новости'},
-                        {'role': 'user', 'content': 'Предоставь мне подробный анализ данной новости ' + this.condition},
-                        {'role': 'user', 'content': 'Представленная новость: ' + temp},
-                        {'role': 'assistant', 'content': 'Вот мой подробный анализ новости ' + this.condition},
+                        {'role': 'system', 'content': 'You are an assistant for the monitoring system. You must give your own analysis of the presented news.'},
+                        {'role': 'user', 'content': 'Предоставь мне подробный анализ данной новости. ' + this.condition},
+                        {'role': 'user', 'content': 'Представленная новость: ' + temp}
                     ],
                 });
                 textArea2.value = completion.data.choices[0].message.content
